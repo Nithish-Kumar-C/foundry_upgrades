@@ -1,66 +1,80 @@
-## Foundry
+Upgradeable Contracts with Foundry (UUPS Pattern)
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This repository shows how to build and upgrade smart contracts using the UUPS upgradeability pattern.
+The upgrade flow uses Foundry scripts and an ERC1967 proxy to keep contract storage stable across upgrades.
 
-Foundry consists of:
+Project Layout
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+src/
+│── BoxV1.sol // Initial implementation
+└── BoxV2.sol // Upgraded implementation
 
-## Documentation
+script/
+│── DeployBox.s.sol // Deploys proxy + V1
+└── UpgradeBox.s.sol // Deploys V2 and upgrades proxy
 
-https://book.getfoundry.sh/
+test/
+└── DeployAndUpgradeTest.t.sol // End-to-end deployment and upgrade test
 
-## Usage
+How It Works
 
-### Build
+BoxV1 is deployed first and wrapped inside an ERC1967Proxy.
 
-```shell
-$ forge build
-```
+The proxy delegates calls to the implementation contract but keeps storage on the proxy.
 
-### Test
+When upgrading, only the implementation address changes.
 
-```shell
-$ forge test
-```
+BoxV2 adds new functions without modifying the storage layout.
 
-### Format
+Requirements
 
-```shell
-$ forge fmt
-```
+Foundry installed
 
-### Gas Snapshots
+curl -L https://foundry.paradigm.xyz
+ | bash
+foundryup
 
-```shell
-$ forge snapshot
-```
+Environment variables:
 
-### Anvil
+RPC_URL=<your_rpc>
+PRIVATE_KEY=<your_private_key>
 
-```shell
-$ anvil
-```
+Deploy (V1)
 
-### Deploy
+Run:
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+forge script script/DeployBox.s.sol
+--rpc-url $RPC_URL
+--private-key $PRIVATE_KEY
+--broadcast
 
-### Cast
+Upgrade to V2
 
-```shell
-$ cast <subcommand>
-```
+Run:
 
-### Help
+forge script script/UpgradeBox.s.sol
+--rpc-url $RPC_URL
+--private-key $PRIVATE_KEY
+--broadcast
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+After the upgrade:
+
+Storage from V1 remains
+
+New logic becomes available (setValue())
+
+Run Tests
+
+forge test -vvvv
+
+This test suite verifies:
+
+Deployment of V1
+
+Upgrade to V2
+
+Storage continuity
+
+License
+
+MIT
